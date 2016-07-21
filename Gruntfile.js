@@ -67,13 +67,14 @@ module.exports = function(grunt) {
     // Plugins:
     'plugins/sigma.layout.noverlap/sigma.layout.noverlap.js',
     'plugins/sigma.plugins.animate/sigma.plugins.animate.js',
-    'plugins/sigma.renderers.customShapes/shape-library.js',
-    'plugins/sigma.renderers.customShapes/sigma.renderers.customShapes.js',
     'plugins/sigma.plugins.filter/sigma.plugins.filter.js',
-    'plugins/sigma.renderers.edgeLabels/settings.js',
-    'plugins/sigma.renderers.edgeLabels/sigma.canvas.edges.labels.def.js',
-    'plugins/sigma.renderers.edgeLabels/sigma.canvas.edges.labels.curve.js',
-    'plugins/sigma.renderers.edgeLabels/sigma.canvas.edges.labels.curvedArrow.js'
+    // 'plugins/sigma.renderers.customShapes/sigma.renderers.customShapes.js',
+    'plugins/sigma.renderers.customShapes/shape-library.js',
+    'plugins/sigma.customNodeIcons.js'
+    // 'plugins/sigma.renderers.edgeLabels/settings.js',
+    // 'plugins/sigma.renderers.edgeLabels/sigma.canvas.edges.labels.def.js',
+    // 'plugins/sigma.renderers.edgeLabels/sigma.canvas.edges.labels.curve.js',
+    // 'plugins/sigma.renderers.edgeLabels/sigma.canvas.edges.labels.curvedArrow.js'
 
   ];
 
