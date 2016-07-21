@@ -1,8 +1,11 @@
 <script src="../../build/sigma.min.js"></script>
 <script src="../../plugins/sigma.layout.forceAtlas2/worker.js"></script>
 <script src="../../plugins/sigma.layout.forceAtlas2/supervisor.js"></script>
+
+<script src="../../node_modules/dagre/dist/dagre.min.js"></script>
+<script src="../../plugins/sigma.layout.dagre/sigma.layout.dagre.js"></script>
 <script   src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
-<script src="https://d3js.org/d3.v3.min.js"></script>
+<!-- <script src="https://d3js.org/d3.v3.min.js"></script> -->
 <script type="text/javascript" src="./graph-components.js"></script>
 
 <link rel="stylesheet" type="text/css" href="./network-graph.css"></link>
@@ -150,8 +153,8 @@ as either properties on the nodes/edges or read from the API/s
 // sigma.utils.pkg('sigma.canvas.nodes');
 
 	var i,
-	    N = 100,
-	    E = 50,
+	    N = 200,
+	    E = 100,
 	    data = {
 	    	nodes: [],
 	    	edges: []
@@ -206,14 +209,62 @@ as either properties on the nodes/edges or read from the API/s
 			type: 'line'
 		});
 	};
+/*
+Random graph with clusters
+*/
+
+/*var i, N = 250, E = 1500, C = 5, d = 0.5, clusters = [];
+for(i = 0; i < C; i++){
+  clusters.push({
+    'id': i,
+    'nodes': [],
+    'color': 'rgb('+Math.round(Math.random()*256)+','+
+                    Math.round(Math.random()*256)+','+
+                    Math.round(Math.random()*256)+')'
+  });
+}
+
+for(i = 0; i < N; i++){
+  var cluster = clusters[(Math.random()*C)|0];
+  data.nodes.push({
+  	'id': 'n'+i,
+  	'x': Math.random(),
+  	'y': Math.random(),
+  	'size': 0.5+4.5*Math.random(),
+  	'color': cluster['color'],
+  	'cluster': cluster['id']
+  })
+  cluster.nodes.push('n'+i);
+}
+
+for(i = 0; i < E; i++){
+  if(Math.random() < 1-d){
+    data.edges.push({
+    	'id': `e${i}`,
+    	'source': `n${(Math.random()*N|0)}`,
+    	'target': `n${(Math.random()*N|0)}`
+    })
+  }else{
+    var cluster = clusters[(Math.random()*C)|0], n = cluster.nodes.length;
+    data.edges.push({
+    	'id': i,
+    	'source': cluster.nodes[Math.random()*n|0], 
+    	'target': cluster.nodes[Math.random()*n|0]
+    })
+  }
+}*/
+
+///////////////////////////////////////
+
+
 
 	var customSettings = {
 		drawLabels: false,
-		drawEdges: false,
+		drawEdges: true,
 		nodesPowerRatio: 10,
 		hideEdgesOnMove: true,
-		minNodeSize: 15,
-		doubleClickEnabled: false
+		minNodeSize: 8,
+		doubleClickEnabled: true
 	}
 
 	var providerFunctions = {
@@ -237,15 +288,30 @@ as either properties on the nodes/edges or read from the API/s
 
 	var s = new GraphFactory(data.nodes, data.edges, customSettings, providerFunctions);
 
-	var noOverlap = s.graph.configNoverlap({
+	// var config = {
+	//   rankdir: 'TB',
+	//   directed: false,
+	//   multigraph: true,
+	//   compound: true
+	//  };
+
+	// var listener = sigma.layouts.dagre.configure(s.graph, config);
+
+	// listener.bind('start stop interpolate', function(event) {
+	//   console.log(event.type);
+	// });
+
+	// sigma.layouts.dagre.start(s.graph);
+
+/*	var noOverlap = s.graph.configNoverlap({
 		nodeMargin: 0.5,
 		scaleNodes: 1.05,
 		gridSize: 75,
 		easing: 'quadraticInOut', 
 		duration: 100
-	});
+	});*/
 
-	noOverlap.bind('start stop interpolate', function(e) {
+/*	noOverlap.bind('start stop interpolate', function(e) {
 	  console.log(e.type);
 	  if(e.type === 'start') {
 	    console.time('noverlap');
@@ -259,7 +325,7 @@ as either properties on the nodes/edges or read from the API/s
 	  	});
 	  	s.graph.refresh();
 	  }
-	});
+	});*/
 
 	s.graph.startForceAtlas2({
 		worker: true,
@@ -267,8 +333,8 @@ as either properties on the nodes/edges or read from the API/s
 	});
 	setTimeout(function(){
 		s.graph.stopForceAtlas2()
-		s.graph.startNoverlap();
-	}, 5000)
+		// s.graph.startNoverlap();
+	}, 10000)
 
 	var filter = s.filter;
 	function resetGraph() {
