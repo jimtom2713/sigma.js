@@ -4,3 +4,4 @@ build/plugins/*
 *.log
 *.swp
 .DS_Store
+set_profile.sh
