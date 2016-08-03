@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<body>
+<script src="//d3js.org/d3.v3.min.js"></script>
+<div id="container"></div>
+<script>
+
+
+
+
+var i = 0;
+var margin = {top: 20, right: 120, bottom: 20, left: 120},
+	width = 960 - margin.right - margin.left,
+	height = 1000 - margin.top - margin.bottom;
+var root;
+var duration = 750;
+var canvas = d3.select("body").append("canvas")
+	.attr("id", "canvas")
+	.attr("width", width + margin.right + margin.left)
+	.attr("height", height + margin.top + margin.bottom)
+
+var context = canvas.node().getContext("2d");
+context.clearRect(0, 0, width + margin.right + margin.left, height + margin.top + margin.bottom);
+
+var hiddenCanvas = d3.select("body").append("canvas")
+	.attr("id", "hiddenCanvas")
+	.attr("width", width + margin.right + margin.left)
+	.attr("height", height + margin.top + margin.bottom)
+	.style("display", "none");
+
+var hiddenContext = hiddenCanvas.node().getContext("2d");
+hiddenContext.clearRect(0, 0, width + margin.right + margin.left, height + margin.top + margin.bottom);
+
+var colToCircle = {};
+
+var detachedContainer = document.createElement("custom");
+var svg = d3.select(detachedContainer).append("svg")
+	.attr("width", width + margin.right + margin.left)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var tree = d3.layout.tree()
+	.size([height, width]);
+
+var diagonal = d3.svg.diagonal()
+	.projection(function(d) { return [d.y, d.x]; });
+
+
+d3.json("graph.json", function(error, treeData){
+	if(error){
+		throw error;
+	}
+	root = treeData;
+	root.x0 = height / 2;
+	root.y0 = 0;
+
+	function collapse(d) {
+		if(d.children){
+			d._children = d.children;
+			d._children.forEach(collapse);
+			d.children = null;
+		}
+	}
+	root.children.forEach(collapse);
+	update(root);
+});
+
+function update(source){
+	  // Compute the new tree layout.
+  var nodes = tree.nodes(root).reverse(),
+      links = tree.links(nodes);
+
+  // Normalize for fixed-depth.
+  nodes.forEach(function(d) { d.y = d.depth * 180; });
+
+  // Update the nodes…
+  var node = svg.selectAll("g.node")
+      .data(nodes, function(d) { return d.id || (d.id = ++i); });
+
+  // Enter any new nodes at the parent's previous position.
+  var nodeEnter = node.enter().append("g")
+      .attr("class", "node")
+      .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
+      .on("click", click);
+
+  nodeEnter.append("circle")
+      .attr("r", 1e-6)
+      .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+
+  nodeEnter.append("text")
+      .attr("x", function(d) { return d.children || d._children ? -10 : 10; })
+      .attr("dy", ".35em")
+      .attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
+      .text(function(d) { return d.name; })
+      .style("fill-opacity", 1e-6);
+
+  // Transition nodes to their new position.
+  var nodeUpdate = node.transition()
+      .duration(duration)
+      .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
+
+  nodeUpdate.select("circle")
+      .attr("r", 4.5)
+      .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+
+  nodeUpdate.select("text")
+      .style("fill-opacity", 1);
+
+  // Transition exiting nodes to the parent's new position.
+  var nodeExit = node.exit().transition()
+      .duration(duration)
+      .attr("transform", function(d) { return "translate(" + source.y + "," + source.x + ")"; })
+      .remove();
+
+  nodeExit.select("circle")
+      .attr("r", 1e-6);
+
+  nodeExit.select("text")
+      .style("fill-opacity", 1e-6);
+
+  // Update the links…
+  var link = svg.selectAll("path.link")
+      .data(links, function(d) { return d.target.id; });
+
+  // Enter any new links at the parent's previous position.
+  link.enter().insert("path", "g")
+      .attr("class", "link")
+      .attr("d", function(d) {
+        var o = {x: source.x0, y: source.y0};
+        return diagonal({source: o, target: o});
+      });
+
+  // Transition links to their new position.
+  link.transition()
+      .duration(duration)
+      .attr("d", diagonal);
+
+  // Transition exiting nodes to the parent's new position.
+  link.exit().transition()
+      .duration(duration)
+      .attr("d", function(d) {
+        var o = {x: source.x, y: source.y};
+        return diagonal({source: o, target: o});
+      })
+      .remove();
+
+  // Stash the old positions for transition.
+  nodes.forEach(function(d) {
+    d.x0 = d.x;
+    d.y0 = d.y;
+  });
+
+  // drawCanvas(context)
+  drawCanvas(hiddenContext, true);
+}
+
+function click(d) {
+  if (d.children) {
+    d._children = d.children;
+    d.children = null;
+  } else {
+    d.children = d._children;
+    d._children = null;
+  }
+  update(d);
+}
+
+function drawCanvas(ctx, hidden){
+	ctx.clearRect(0, 0, width + margin.right + margin.left, height + margin.top + margin.bottom);
+	// console.log(ctx);
+	var nodeElements = svg.selectAll(".node")
+	nodeElements.each(function(d){
+		var node = d3.select(this);
+		if(hidden){
+			if(node.attr("color") === null){
+				node.attr("color", genColor());
+				colToCircle[node.attr("color")] = node;
+			}
+			ctx.fillStyle = node.attr("color");
+		} else {
+			ctx.fillStyle = node.attr("fill");
+		}
+
+		ctx.beginPath();
+		ctx.arc(d.y + 20, d.x, 10, 0, 2 * Math.PI);
+		ctx.fill();
+		ctx.closePath();
+	})
+	var linkElements = svg.selectAll(".link");
+	linkElements.each(function(e){
+		ctx.moveTo(e.source.y + 20, e.source.x);
+		// ctx.bezierCurveTo(90, e.source.y0, 90, e.target.y0, e.target.y0 + 20, e.target.x0);
+		ctx.lineTo(e.target.y + 20, e.target.x);
+		ctx.stroke();
+	})
+}
+
+document.getElementById("canvas").addEventListener("click", function(e){
+	// drawCanvas(hiddenContext, true);
+	var mouseX = e.layerX;
+	var mouseY = e.layerY;
+	 var col = hiddenContext.getImageData(mouseX, mouseY, 1, 1).data;
+	//Our map uses these rgb strings as keys to nodes.
+	var colString = "rgb(" + col[0] + "," + col[1] + ","+ col[2] + ")";
+	var node = colToCircle[colString];
+	if(node){
+		click(node[0][0].__data__);
+	}
+})
+
+var nextCol = 1;
+function genColor(){
+	var ret = [];
+	if(nextCol < 16777215){
+	  ret.push(nextCol & 0xff); // R
+	  ret.push((nextCol & 0xff00) >> 8); // G 
+	  ret.push((nextCol & 0xff0000) >> 16); // B
+
+	  nextCol += 1; // This is exagerated for this example and would ordinarily be 1.
+	}
+	var col = "rgb(" + ret.join(',') + ")";
+	return col;
+}
+
+function animate() {
+	drawCanvas(context);
+	window.requestAnimationFrame(animate);
+}
+window.requestAnimationFrame(animate);
+
+
+
+
+
+
+
+
+
+
+
+/*d3.json("graph.json", function(error, treeData) {
+
+	if(error) throw error;
+	root = treeData[0];
+  	var nodes = tree.nodes(root).reverse();
+	var links = tree.links(nodes);
+	var context = canvas.node().getContext("2d");
+	var hiddenContext = hiddenCanvas.node().getContext("2d");
+	context.clearRect(0, 0, width + margin.right + margin.left, height + margin.top + margin.bottom);
+	hiddenContext.clearRect(0, 0, width, height)
+  	nodes.forEach(function(d) { d.y = d.depth * 180; });
+
+	context.strokeStyle = "black";
+	context.beginPath();
+	links.forEach(function(d){
+		context.moveTo(d.source.y + 20, d.source.x);
+		context.lineTo(d.target.y + 20, d.target.x);
+	});
+	context.stroke();
+
+	context.fillStyle = "steelblue";
+	context.beginPath();
+	nodes.forEach(function(d){
+		context.moveTo(d.y, d.x);
+		context.arc(d.y + 20, d.x, 10, 0, 2 * Math.PI);
+	});
+	context.fill();
+});*/
+
+
+
+//////////////////////////////////////////////////////////////////
+//////  working example of d3 canvas with event capture   ////////
+//////////////////////////////////////////////////////////////////
+
+
+/*window.addEventListener('load', function(){
+
+  var width = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+  var height = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+  height = height / 2;
+
+  var mainCanvas = document.createElement("canvas");
+  var hiddenCanvas = document.createElement("canvas");
+
+  var data = [];
+  var colToNode = {};
+
+  mainCanvas.setAttribute('width',  width);
+  mainCanvas.setAttribute('height', height);
+  hiddenCanvas.setAttribute('width', width);
+  hiddenCanvas.setAttribute('height', height);
+  // hiddenCanvas.style.display = 'none';
+
+  var container = document.querySelector("#container");
+  container.appendChild(mainCanvas);
+  container.appendChild(hiddenCanvas);
+
+  function makeData(count) {
+    data = [];
+    for(var i = 0; i < count; i++) {
+      // var w = 10 + Math.random() * 20;
+      var w = 5;
+      var obj = {
+        x: Math.random() * (width - 20),
+        y: Math.random() * (height - 20),
+        xVel: (Math.random() * 0.5) * (Math.random() < 0.5 ? -1 : 1),
+        yVel: (Math.random() * 0.5) * (Math.random() < 0.5 ? -1 : 1),
+        width: w,
+        height: w,
+        index: i
+      };
+      data.push(obj);
+    }
+    return data;
+  }
+
+  function update(data) {
+    var numElements = data.length;
+    for(var i = 0; i < numElements; i++) {
+      var node = data[i];
+      node.x += node.xVel;
+      node.y += node.yVel;
+
+      if(node.x > width || node.x < 0) {
+        node.xVel *= -1;
+      }
+      if(node.y > height || node.y < 0) {
+        node.yVel *= -1;
+      }
+    }
+  }
+
+   function shuffle(data) {
+    var numElements = data.length;
+    for(var i = 0; i < numElements; i++) {
+      node.x = Math.random * width;
+      node.y = Math.random * width;
+    }
+  }
+
+  var nextCol = 1;
+  function genColor(){
+    var ret = [];
+    if(nextCol < 16777215){
+      ret.push(nextCol & 0xff); // R
+      ret.push((nextCol & 0xff00) >> 8); // G 
+      ret.push((nextCol & 0xff0000) >> 16); // B
+
+      nextCol += 1;
+    }
+    var col = "rgb(" + ret.join(',') + ")";
+    return col;
+  }
+
+  function draw(data, canvas, hidden) {
+    var ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, width, height);
+
+    var numElements = data.length;
+    for(var i = 0; i < numElements; i++) {
+      var node = data[i];
+
+      if(node.renderCol) {
+        ctx.fillStyle = node.renderCol;
+      } else {
+        ctx.fillStyle = 'RGBA(105, 105, 105, 0.8)';
+      }
+
+      if(hidden) {
+        if(node.__pickColor === undefined) {
+          node.__pickColor = genColor();
+          colToNode[node.__pickColor] = node;
+        }
+        ctx.fillStyle = node.__pickColor;
+      }
+
+      drawMark(ctx, node);
+    }
+  }
+
+  function drawMark(ctx, node) {
+    ctx.fillRect(node.x, node.y, node.width, node.height);
+  }
+  mainCanvas.addEventListener("mousemove", function(e){
+    draw(data, hiddenCanvas, true);
+    var mouseX = e.layerX;
+    var mouseY = e.layerY;
+
+    var ctx = hiddenCanvas.getContext("2d");
+    var col = ctx.getImageData(mouseX, mouseY, 1, 1).data;
+    var colString = "rgb(" + col[0] + "," + col[1] + ","+ col[2] + ")";
+
+    var node = colToNode[colString];
+    if(node) {
+      node.renderCol = node.__pickColor;
+    }
+  });
+
+  data = makeData(1000);
+  console.log(data);
+  function animate() {
+    draw(data, mainCanvas);
+    update(data);
+    window.requestAnimationFrame(animate);
+  }
+  window.requestAnimationFrame(animate);
+
+}, false);*/
+
+</script>
+</body>

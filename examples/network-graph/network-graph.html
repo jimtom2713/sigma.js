@@ -5,7 +5,7 @@
 <script src="../../node_modules/dagre/dist/dagre.min.js"></script>
 <script src="../../plugins/sigma.layout.dagre/sigma.layout.dagre.js"></script>
 <script   src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
-<!-- <script src="https://d3js.org/d3.v3.min.js"></script> -->
+<script src="https://d3js.org/d3.v3.min.js"></script>
 <script type="text/javascript" src="./graph-components.js"></script>
 
 <link rel="stylesheet" type="text/css" href="./network-graph.css"></link>
@@ -193,8 +193,8 @@ as either properties on the nodes/edges or read from the API/s
 			id: `n${i}`,
 			nodeType: nodeTypes[Math.floor(Math.random() * (6))],
 			type: 'image',
-			x: Math.random(),
-			y: Math.random(),
+			// x: Math.random(),
+			// y: Math.random(),
 			color: colors[String(Math.floor(Math.random() * (11 - 1) + 1))],
 			size: Math.random()*10,
 			url: urls[Math.floor(Math.random() * urls.length)]
@@ -209,54 +209,6 @@ as either properties on the nodes/edges or read from the API/s
 			type: 'line'
 		});
 	};
-/*
-Random graph with clusters
-*/
-
-/*var i, N = 250, E = 1500, C = 5, d = 0.5, clusters = [];
-for(i = 0; i < C; i++){
-  clusters.push({
-    'id': i,
-    'nodes': [],
-    'color': 'rgb('+Math.round(Math.random()*256)+','+
-                    Math.round(Math.random()*256)+','+
-                    Math.round(Math.random()*256)+')'
-  });
-}
-
-for(i = 0; i < N; i++){
-  var cluster = clusters[(Math.random()*C)|0];
-  data.nodes.push({
-  	'id': 'n'+i,
-  	'x': Math.random(),
-  	'y': Math.random(),
-  	'size': 0.5+4.5*Math.random(),
-  	'color': cluster['color'],
-  	'cluster': cluster['id']
-  })
-  cluster.nodes.push('n'+i);
-}
-
-for(i = 0; i < E; i++){
-  if(Math.random() < 1-d){
-    data.edges.push({
-    	'id': `e${i}`,
-    	'source': `n${(Math.random()*N|0)}`,
-    	'target': `n${(Math.random()*N|0)}`
-    })
-  }else{
-    var cluster = clusters[(Math.random()*C)|0], n = cluster.nodes.length;
-    data.edges.push({
-    	'id': i,
-    	'source': cluster.nodes[Math.random()*n|0], 
-    	'target': cluster.nodes[Math.random()*n|0]
-    })
-  }
-}*/
-
-///////////////////////////////////////
-
-
 
 	var customSettings = {
 		drawLabels: false,
@@ -287,6 +239,39 @@ for(i = 0; i < E; i++){
 	}
 
 	var s = new GraphFactory(data.nodes, data.edges, customSettings, providerFunctions);
+
+	/*
+	The following code reformats the edge list for usage in d3 force layouts
+	allowing nodes to be linked by id name rather than array index.
+	*/
+	var edges = [];
+	s.graph.graph.edges().forEach(function(e){
+		var sourceNode = s.graph.graph.nodes().filter(function(n){
+			return n.id === e.source;
+		})[0];
+		var targetNode = s.graph.graph.nodes().filter(function(n){
+			return n.id === e.target;
+		})[0];
+		edges.push({
+			"source": sourceNode,
+			"target": targetNode
+		})
+	})
+	// end edge transformation
+
+	var force = d3.layout.force().size([1000,1000]).nodes(s.graph.graph.nodes()).links(edges);
+	force.linkDistance(20);
+	force.start();
+	force.on("end", function(){
+		s.graph.refresh();
+	})
+	force.on("tick", function(){
+		s.graph.refresh();
+	});
+
+
+
+	// var s = new GraphFactory(data.nodes, data.edges, customSettings, providerFunctions);
 
 	// var config = {
 	//   rankdir: 'TB',
@@ -327,7 +312,7 @@ for(i = 0; i < E; i++){
 	  }
 	});*/
 
-	s.graph.startForceAtlas2({
+	/*s.graph.startForceAtlas2({
 		worker: true,
 		barnesHutOptimize: false
 	});
@@ -355,5 +340,5 @@ for(i = 0; i < E; i++){
 			return this.degree(n.id) === parseInt(e.target.innerHTML);
 		}, "degree-filter")
 		.apply();
-	})
+	})*/
 </script>
