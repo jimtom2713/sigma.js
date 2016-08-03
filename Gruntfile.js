@@ -71,7 +71,7 @@ module.exports = function(grunt) {
     // 'plugins/sigma.renderers.customShapes/sigma.renderers.customShapes.js',
     'plugins/sigma.renderers.customShapes/shape-library.js',
     'plugins/sigma.customNodeIcons.js',
-    'plugins/sigma.plugins.dragNodes/sigma.plugins/dragNodes.js'
+    'plugins/sigma.plugins.dragNodes/sigma.plugins.dragNodes.js'
     // 'plugins/sigma.renderers.edgeLabels/settings.js',
     // 'plugins/sigma.renderers.edgeLabels/sigma.canvas.edges.labels.def.js',
     // 'plugins/sigma.renderers.edgeLabels/sigma.canvas.edges.labels.curve.js',
