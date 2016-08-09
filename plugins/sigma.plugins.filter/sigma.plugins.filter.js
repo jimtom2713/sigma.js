@@ -490,6 +490,10 @@
    */
   var filter = null;
 
+  sigma.plugins.dropFilters = function(s) {
+    filter = null;
+  }
+
   /**
    * @param  {sigma} s The related sigma instance.
    */
